@@ -1,339 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="A scroll-driven web story about recreational fishing discards in the United States." />
-  <title>Wasted Potential: Recreational Discards</title>
-  <style>
-    :root {
-      --ink: #16253d;
-      --muted: #4d5d76;
-      --blue: #1769e0;
-      --aqua: #1fc7c2;
-      --yellow: #ffb703;
-      --coral: #ff6f61;
-      --purple: #7b55d8;
-      --white: #ffffff;
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-snap-type: y proximity; }
-    body {
-      margin: 0;
-      color: var(--ink);
-      font-family: Arial, Helvetica, sans-serif;
-      background: #fff9eb;
-    }
-
-    .progress {
-      position: fixed;
-      z-index: 30;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 6px;
-      background: rgba(255,255,255,.4);
-    }
-    .progress span {
-      display: block;
-      width: 0;
-      height: 100%;
-      background: linear-gradient(90deg, var(--yellow), var(--coral), var(--purple), var(--aqua));
-      transition: width .12s linear;
-    }
-
-    .story-nav {
-      position: fixed;
-      z-index: 25;
-      right: 1.25rem;
-      top: 50%;
-      transform: translateY(-50%);
-      display: grid;
-      gap: .6rem;
-    }
-    .story-nav a {
-      width: 12px;
-      height: 12px;
-      border: 2px solid rgba(22,37,61,.6);
-      border-radius: 50%;
-      background: rgba(255,255,255,.8);
-      transition: transform .2s ease, background .2s ease;
-    }
-    .story-nav a:hover, .story-nav a.active {
-      background: var(--blue);
-      border-color: var(--blue);
-      transform: scale(1.3);
-    }
-
-    .story-hero, .story-page, .story-closing {
-      scroll-snap-align: start;
-      min-height: 100vh;
-      position: relative;
-    }
-
-    .story-hero {
-      min-height: 100vh;
-      padding: clamp(2rem, 7vw, 7rem) clamp(1.25rem, 8vw, 9rem);
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-      color: var(--white);
-      background: linear-gradient(140deg, #6538c4 0%, #1769e0 37%, #1fc7c2 70%, #ffb703 100%);
-    }
-    .story-hero::before, .story-hero::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,.16); }
-    .story-hero::before { width: 42vw; height: 42vw; left: -14vw; bottom: -22vw; }
-    .story-hero::after { width: 30vw; height: 30vw; right: -10vw; top: -13vw; }
-    .hero-copy { position: relative; z-index: 1; width: min(100%, 980px); }
-    .kicker {
-      margin: 0 0 1rem;
-      color: #fff4bd;
-      font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      font-size: .8rem;
-    }
-    .story-hero h1 {
-      max-width: 900px;
-      margin: 0;
-      font-size: clamp(2.7rem, 7vw, 6.3rem);
-      line-height: .98;
-      letter-spacing: -.055em;
-    }
-    .story-hero p {
-      max-width: 730px;
-      margin: 1.5rem 0 0;
-      color: #ffffff;
-      font-size: clamp(1.1rem, 2vw, 1.45rem);
-      line-height: 1.6;
-    }
-    .scroll-prompt {
-      display: inline-flex;
-      gap: .55rem;
-      align-items: center;
-      margin-top: 2rem;
-      color: #ffffff;
-      font-weight: 700;
-      text-decoration: none;
-    }
-    .scroll-prompt span { font-size: 1.55rem; animation: bounce 1.3s infinite; }
-    @keyframes bounce { 50% { transform: translateY(6px); } }
-
-    .story-page {
-      display: flex;
-      flex-direction: column;
-      padding: clamp(1.25rem, 3vw, 2.75rem) clamp(1rem, 5vw, 5rem);
-      background: #f6fbff;
-    }
-    .story-page-2 { background: #fff8e8; }
-    .story-page-3 { background: #f8f1ff; }
-    .story-page-4 { background: #fff1ec; }
-    .story-page::before {
-      content: attr(data-step);
-      display: block;
-      width: min(100%, 1600px);
-      margin: 0 auto .55rem;
-      color: var(--blue);
-      font-size: .8rem;
-      font-weight: 800;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-    }
-    .report-intro { width: min(100%, 1600px); margin: 0 auto 1.25rem; }
-    .report-intro h2 {
-      margin: 0 0 .55rem;
-      color: var(--blue);
-      font-size: clamp(1.65rem, 3.2vw, 3rem);
-      letter-spacing: -.035em;
-    }
-    .report-intro p, .panel-note p, .story-closing p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 1rem;
-      line-height: 1.65;
-    }
-    .story-content {
-      width: min(100%, 1600px);
-      flex: 1;
-      min-height: 550px;
-      margin: 0 auto;
-      display: flex;
-      gap: clamp(.75rem, 1.5vw, 1.5rem);
-    }
-    .story-content.note-right { flex-direction: row; }
-    .story-content.note-left { flex-direction: row-reverse; }
-    .embed-wrap {
-      flex: 0 0 calc(87.5% - clamp(.75rem, 1.5vw, 1.5rem));
-      min-width: 0;
-      min-height: 550px;
-      overflow: hidden;
-      background: #fff;
-      border: 4px solid #fff;
-      border-radius: 22px;
-      box-shadow: 0 14px 32px rgba(42,70,118,.18), 0 0 0 2px rgba(23,105,224,.12);
-    }
-    .embed-wrap iframe { display: block; width: 100%; height: 100%; min-height: 550px; border: 0; }
-    .panel-note {
-      flex: 1 1 12.5%;
-      min-width: 0;
-      align-self: stretch;
-      padding: clamp(1rem, 1.6vw, 1.45rem);
-      background: linear-gradient(155deg, #fff 0%, #e3f9f7 100%);
-      border: 2px solid #55d9d2;
-      border-radius: 22px;
-      box-shadow: 0 10px 22px rgba(32,199,194,.14);
-    }
-    .story-page-2 .panel-note { background: linear-gradient(155deg, #fff 0%, #fff1c4 100%); border-color: #ffcf42; }
-    .story-page-3 .panel-note { background: linear-gradient(155deg, #fff 0%, #f0e5ff 100%); border-color: #b997ff; }
-    .story-page-4 .panel-note { background: linear-gradient(155deg, #fff 0%, #ffe2d7 100%); border-color: #ff9e7b; }
-    .panel-note h3 { margin: 0 0 .75rem; color: #1769e0; font-size: 1.05rem; }
-
-    .story-closing {
-      display: grid;
-      place-items: center;
-      padding: clamp(2rem, 7vw, 7rem) clamp(1.25rem, 8vw, 9rem);
-      background: linear-gradient(135deg, #fff3c9, #f1e6ff, #dffbf7);
-    }
-    .closing-copy { width: min(100%, 900px); }
-    .story-closing h2 { margin: 0 0 .8rem; color: var(--blue); font-size: clamp(2.1rem, 5vw, 4.2rem); letter-spacing: -.045em; }
-    .story-closing p { font-size: clamp(1.1rem, 2vw, 1.3rem); }
-    .restart { display: inline-block; margin-top: 1.75rem; padding: .85rem 1.1rem; border-radius: 999px; background: var(--blue); color: #fff; font-weight: 700; text-decoration: none; }
-
-    @media (max-width: 900px) {
-      html { scroll-snap-type: none; }
-      .story-nav { display: none; }
-      .story-page { min-height: auto; }
-      .story-content, .story-content.note-right, .story-content.note-left { flex-direction: column; }
-      .embed-wrap, .embed-wrap iframe { min-height: 480px; }
-      .panel-note { flex: none; }
-    }
-    @media (max-width: 700px) { .embed-wrap, .embed-wrap iframe { min-height: 430px; } }
-  </style>
-</head>
-<body>
-  <div class="progress" aria-hidden="true"><span></span></div>
-  <nav class="story-nav" aria-label="Story navigation">
-    <a href="#top" class="active" aria-label="Introduction"></a>
-    <a href="#chapter-1" aria-label="Chapter 1"></a>
-    <a href="#chapter-2" aria-label="Chapter 2"></a>
-    <a href="#chapter-3" aria-label="Chapter 3"></a>
-    <a href="#chapter-4" aria-label="Chapter 4"></a>
-    <a href="#closing" aria-label="Conclusion"></a>
-  </nav>
-
-  <header id="top" class="story-hero">
-    <div class="hero-copy">
-      <p class="kicker">A data story on recreational fishing</p>
-      
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="description" content="A scroll-driven web story about recreational fishing discards in the United States."/><title>Wasted Potential: Recreational Discards</title><style>
+:root{--ink:#16253d;--muted:#4d5d76;--blue:#1769e0;--aqua:#1fc7c2;--yellow:#ffb703;--coral:#ff6f61;--purple:#7b55d8;--white:#fff}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-snap-type:y proximity}body{margin:0;color:var(--ink);font-family:Arial,Helvetica,sans-serif;background:#fff9eb}.progress{position:fixed;z-index:30;top:0;left:0;width:100%;height:6px;background:rgba(255,255,255,.4)}.progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--yellow),var(--coral),var(--purple),var(--aqua));transition:width .12s linear}.story-nav{position:fixed;z-index:25;right:1.25rem;top:50%;transform:translateY(-50%);display:grid;gap:.6rem}.story-nav a{width:12px;height:12px;border:2px solid rgba(22,37,61,.6);border-radius:50%;background:rgba(255,255,255,.8);transition:transform .2s ease,background .2s ease}.story-nav a:hover,.story-nav a.active{background:var(--blue);border-color:var(--blue);transform:scale(1.3)}.story-hero,.story-page,.story-closing{scroll-snap-align:start;min-height:100vh;position:relative}.story-hero{min-height:100vh;padding:clamp(2rem,7vw,7rem) clamp(1.25rem,8vw,9rem);display:grid;place-items:center;overflow:hidden;color:var(--white);background:linear-gradient(140deg,#6538c4 0%,#1769e0 37%,#1fc7c2 70%,#ffb703 100%)}.story-hero::before,.story-hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.16)}.story-hero::before{width:42vw;height:42vw;left:-14vw;bottom:-22vw}.story-hero::after{width:30vw;height:30vw;right:-10vw;top:-13vw}.hero-copy{position:relative;z-index:1;width:min(100%,980px)}.kicker{margin:0 0 1rem;color:#fff4bd;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.8rem}.story-hero h1{max-width:900px;margin:0;font-size:clamp(2.7rem,7vw,6.3rem);line-height:.98;letter-spacing:-.055em}.story-hero p{max-width:730px;margin:1.5rem 0 0;color:#fff;font-size:clamp(1.1rem,2vw,1.45rem);line-height:1.6}.scroll-prompt{display:inline-flex;gap:.55rem;align-items:center;margin-top:2rem;color:#fff;font-weight:700;text-decoration:none}.scroll-prompt span{font-size:1.55rem;animation:bounce 1.3s infinite}@keyframes bounce{50%{transform:translateY(6px)}}.story-page{display:flex;flex-direction:column;padding:clamp(1.25rem,3vw,2.75rem) clamp(1rem,5vw,5rem);background:#f6fbff}.story-page-2{background:#fff8e8}.story-page-3{background:#f8f1ff}.story-page-4{background:#fff1ec}.story-page::before{content:attr(data-step);display:block;width:min(100%,1600px);margin:0 auto .55rem;color:var(--blue);font-size:.8rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}.report-intro{width:min(100%,1600px);margin:0 auto 1.25rem}.report-intro h2{margin:0 0 .55rem;color:var(--blue);font-size:clamp(1.65rem,3.2vw,3rem);letter-spacing:-.035em}.report-intro p,.panel-note p,.story-closing p{margin:0;color:var(--muted);font-size:1rem;line-height:1.65}.story-content{width:min(100%,1600px);flex:1;min-height:550px;margin:0 auto;display:flex;gap:clamp(.75rem,1.5vw,1.5rem)}.story-content.note-right{flex-direction:row}.story-content.note-left{flex-direction:row-reverse}.embed-wrap{flex:0 0 calc(87.5% - clamp(.75rem,1.5vw,1.5rem));min-width:0;min-height:550px;overflow:hidden;background:#fff;border:4px solid #fff;border-radius:22px;box-shadow:0 14px 32px rgba(42,70,118,.18),0 0 0 2px rgba(23,105,224,.12)}.embed-wrap iframe{display:block;width:100%;height:100%;min-height:550px;border:0}.panel-note{flex:1 1 12.5%;min-width:0;align-self:stretch;padding:clamp(1rem,1.6vw,1.45rem);background:linear-gradient(155deg,#fff 0%,#e3f9f7 100%);border:2px solid #55d9d2;border-radius:22px;box-shadow:0 10px 22px rgba(32,199,194,.14)}.story-page-2 .panel-note{background:linear-gradient(155deg,#fff 0%,#fff1c4 100%);border-color:#ffcf42}.story-page-3 .panel-note{background:linear-gradient(155deg,#fff 0%,#f0e5ff 100%);border-color:#b997ff}.story-page-4 .panel-note{background:linear-gradient(155deg,#fff 0%,#ffe2d7 100%);border-color:#ff9e7b}.panel-note h3{margin:0 0 .75rem;color:var(--blue);font-size:1.05rem}.story-closing{display:grid;place-items:center;padding:clamp(2rem,7vw,7rem) clamp(1.25rem,8vw,9rem);background:linear-gradient(135deg,#fff3c9,#f1e6ff,#dffbf7)}.closing-copy{width:min(100%,900px)}.story-closing h2{margin:0 0 .8rem;color:var(--blue);font-size:clamp(2.1rem,5vw,4.2rem);letter-spacing:-.045em}.story-closing p{font-size:clamp(1.1rem,2vw,1.3rem)}.restart{display:inline-block;margin-top:1.75rem;padding:.85rem 1.1rem;border-radius:999px;background:var(--blue);color:#fff;font-weight:700;text-decoration:none}@media(max-width:900px){html{scroll-snap-type:none}.story-nav{display:none}.story-page{min-height:auto}.story-content,.story-content.note-right,.story-content.note-left{flex-direction:column}.embed-wrap,.embed-wrap iframe{min-height:480px}.panel-note{flex:none}}@media(max-width:700px){.embed-wrap,.embed-wrap iframe{min-height:430px}}
+</style></head><body><div class="progress" aria-hidden="true"><span></span></div><nav class="story-nav" aria-label="Story navigation"><a href="#top" class="active" aria-label="Introduction"></a><a href="#chapter-1" aria-label="Chapter 1"></a><a href="#chapter-2" aria-label="Chapter 2"></a><a href="#chapter-3" aria-label="Chapter 3"></a><a href="#chapter-4" aria-label="Chapter 4"></a><a href="#closing" aria-label="Conclusion"></a></nav><header id="top" class="story-hero"><div class="hero-copy"><p class="kicker">A data story on recreational fishing</p>
     <h1>Wasted Potential: The Conservation Impacts of Ignoring Recreational Discards</h1>
     <p>Most fish caught by recreational anglers are thrown back.  A portion of those fish die.   We investigated the scale and scope of recreational discards across the US.</p>
-  
-      <a class="scroll-prompt" href="#chapter-1">Scroll to explore <span aria-hidden="true">↓</span></a>
-    </div>
-  </header>
-
-  <main>
-    <section id="chapter-1" class="story-page story-page-1" data-step="Chapter 1 — The scale">
-      
+  <a class="scroll-prompt" href="#chapter-1">Scroll to explore <span aria-hidden="true">↓</span></a></div></header><main><section id="chapter-1" class="story-page story-page-1" data-step="Chapter 1 — The scale">
       <div class="report-intro">
         <h2 id="report-1-title">The majority of recreational fishing occurs in the Southeast US</h2>
         <p>Text</p>
       </div>
       <div class="story-content note-right">
         <div class="embed-wrap">
-          <iframe title="Power BI report page 1" src="h<iframe title="test" width="600" height="373.5" src="https://app.powerbi.com/view?r=eyJrIjoiNDYzZjlkNzctMzhkOC00ZjA4LWEyYmQtMTQ0NTc0ZWM0MjRkIiwidCI6IjVmMTA5MzEwLTFhYjAtNDE1NS04ZDk3LTAwYzJjZWUzYTMyMiJ9" frameborder="0" allowFullScreen="true"></iframe>"></iframe>
+          <iframe title="Discards for publication 08_26_v3 Copy" src="https://app.powerbi.com/view?r=eyJrIjoiMDNjNzA1MzUtNDM0NS00ZTA5LTk4ZGEtMGZkYWZiZmY2YmRiIiwidCI6IjVmMTA5MzEwLTFhYjAtNDE1NS04ZDk3LTAwYzJjZWUzYTMyMiJ9&pageName=4c2bb42637100820e303" allowfullscreen="true"></iframe>
         </div>
         <aside class="panel-note" aria-label="Recreational landings outstrip commercial landings in the Southeast and Western Pacific regions.">
           <h3>Notes</h3>
           <p>Recreational landings outstrip commercial landings in the Southeast and Western Pacific regions.</p>
         </aside>
       </div>
-    
-    </section>
-    <section id="chapter-2" class="story-page story-page-2" data-step="Chapter 2 — The pattern">
-      
+    </section><section id="chapter-2" class="story-page story-page-2" data-step="Chapter 2 — The pattern">
       <div class="report-intro">
         <h2 id="report-2-title">The majority of recreationally caught fish are discarded most regions</h2>
         <p>The majority of recreationally caught fish are discarded most regions</p>
       </div>
       <div class="story-content note-left">
         <div class="embed-wrap">
-          <iframe title="Power BI report page 2" src="https://app.powerbi.com/view?r=eyJrIjoiMjQxOTM1OTYtN2Y5Mi00YmE0LWJmMWYtZmNhZTZjYTRlN2U1IiwidCI6IjVhMzA1Y2FiLWRlYmUtNDFmNi1hYzk4LWI3NGZkM2JmZmUxMCJ9&pageName=ReportSection1" allowfullscreen="true"></iframe>
+          <iframe title="Discards for publication 08_26_v3 Copy" src="https://app.powerbi.com/view?r=eyJrIjoiMDNjNzA1MzUtNDM0NS00ZTA5LTk4ZGEtMGZkYWZiZmY2YmRiIiwidCI6IjVmMTA5MzEwLTFhYjAtNDE1NS04ZDk3LTAwYzJjZWUzYTMyMiJ9&pageName=edac8a500c9c3c30ede4" allowfullscreen="true"></iframe>
         </div>
         <aside class="panel-note" aria-label="Placeholder notes for report 2">
           <h3>Notes</h3>
           <p>For every keeper about 2-3 are discarded in most regions</p>
         </aside>
       </div>
-    
-    </section>
-    <section id="chapter-3" class="story-page story-page-3" data-step="Chapter 3 — The consequence">
-      
+    </section><section id="chapter-3" class="story-page story-page-3" data-step="Chapter 3 — The consequence">
       <div class="report-intro">
         <h2 id="report-3-title">High rates of recreational catch and discards were associated with overfishing </h2>
         <p>Of the 14 stocks that are experiencing overfishing, according to NOAA, nearly all of them had a high proportion of recreational landings and most of the recreational catch was discarded. </p>
       </div>
       <div class="story-content note-right">
         <div class="embed-wrap">
-          <iframe title="Power BI report page 3" src="https://app.powerbi.com/view?r=eyJrIjoiMjQxOTM1OTYtN2Y5Mi00YmE0LWJmMWYtZmNhZTZjYTRlN2U1IiwidCI6IjVhMzA1Y2FiLWRlYmUtNDFmNi1hYzk4LWI3NGZkM2JmZmUxMCJ9&pageName=ReportSection2" allowfullscreen="true"></iframe>
+          <iframe title="Discards for publication 08_26_v3 Copy" src="https://app.powerbi.com/view?r=eyJrIjoiMDNjNzA1MzUtNDM0NS00ZTA5LTk4ZGEtMGZkYWZiZmY2YmRiIiwidCI6IjVmMTA5MzEwLTFhYjAtNDE1NS04ZDk3LTAwYzJjZWUzYTMyMiJ9&pageName=0615ebf165208c0090e0" allowfullscreen="true"></iframe>
         </div>
         <aside class="panel-note" aria-label="Placeholder notes for report 3">
           <h3>Notes</h3>
           <p>Overfished (where the stocks abundance is too low) stocks also showed a similar association with high recreational landings and discards </p>
         </aside>
       </div>
-    
-    </section>
-    <section id="chapter-4" class="story-page story-page-4" data-step="Chapter 4 — Explore">
-      
+    </section><section id="chapter-4" class="story-page story-page-4" data-step="Chapter 4 — Explore">
       <div class="report-intro">
         <h2 id="report-4-title">Explore the data</h2>
         <p>Explore the full database and drill down to stock specific questions</p>
       </div>
       <div class="story-content note-left">
         <div class="embed-wrap">
-          <iframe title="Power BI report page 4" src="https://app.powerbi.com/view?r=eyJrIjoiMjQxOTM1OTYtN2Y5Mi00YmE0LWJmMWYtZmNhZTZjYTRlN2U1IiwidCI6IjVhMzA1Y2FiLWRlYmUtNDFmNi1hYzk4LWI3NGZkM2JmZmUxMCJ9&pageName=ReportSection3" allowfullscreen="true"></iframe>
+          <iframe title="Discards for publication 08_26_v3 Copy" src="https://app.powerbi.com/view?r=eyJrIjoiMDNjNzA1MzUtNDM0NS00ZTA5LTk4ZGEtMGZkYWZiZmY2YmRiIiwidCI6IjVmMTA5MzEwLTFhYjAtNDE1NS04ZDk3LTAwYzJjZWUzYTMyMiJ9&pageName=f963c550473a90f49ac3" allowfullscreen="true"></iframe>
         </div>
         <aside class="panel-note" aria-label="Placeholder notes for report 4">
           <h3>Notes</h3>
           <p>Explain how to navigate the panels </p>
         </aside>
       </div>
-    
-    </section>
-  </main>
-
-  <footer id="closing" class="story-closing">
-    <div class="closing-copy">
-      
+    </section></main><footer id="closing" class="story-closing"><div class="closing-copy">
     <div>
       <h2>What can we do about it? </h2>
       <p>There is no silver bullet. Here are some concrete steps to take</p>
     </div>
-  
-      <a class="restart" href="#top">Back to the beginning ↑</a>
-    </div>
-  </footer>
-
-  <script>
-    const progress = document.querySelector('.progress span');
-    const navLinks = [...document.querySelectorAll('.story-nav a')];
-    const sections = [...document.querySelectorAll('#top, .story-page, #closing')];
-    function updateProgress() {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      progress.style.width = `${max ? (window.scrollY / max) * 100 : 0}%`;
-    }
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const index = sections.indexOf(entry.target);
-          navLinks.forEach((link, i) => link.classList.toggle('active', i === index));
-        }
-      });
-    }, { threshold: .55 });
-    sections.forEach(section => observer.observe(section));
-    window.addEventListener('scroll', updateProgress, { passive: true });
-    updateProgress();
-  </script>
-</body>
-</html>
+  <a class="restart" href="#top">Back to the beginning ↑</a></div></footer><script>const progress=document.querySelector('.progress span'),navLinks=[...document.querySelectorAll('.story-nav a')],sections=[...document.querySelectorAll('#top,.story-page,#closing')];function updateProgress(){const max=document.documentElement.scrollHeight-window.innerHeight;progress.style.width=`${max?(window.scrollY/max)*100:0}%`;}const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){const index=sections.indexOf(entry.target);navLinks.forEach((link,i)=>link.classList.toggle('active',i===index));}}),{threshold:.55});sections.forEach(section=>observer.observe(section));window.addEventListener('scroll',updateProgress,{passive:true});updateProgress();</script></body></html>
